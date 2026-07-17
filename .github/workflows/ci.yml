@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -6,30 +6,42 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: write
-
 jobs:
-  test:
+  lint:
+    name: Lint & Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-      - run: go build ./...
-      - run: go test ./... -v
+      - name: gofmt check
+        run: test -z "$(gofmt -l .)"
+      - name: go vet
+        run: go vet ./...
 
-  release:
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    needs: lint
     steps:
       - uses: actions/checkout@v4
-      - name: Tag release
-        run: |
-          VERSION=$(date +%Y.%m.%d)-$(git rev-parse --short HEAD)
-          git tag -a "v$VERSION" -m "Release $VERSION"
-          git push origin "v$VERSION"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Go build
+        run: go build ./...
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Run tests
+        run: go test ./... -v -coverprofile=coverage.out
+      - name: Coverage report
+        run: go tool cover -func=coverage.out
