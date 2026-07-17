@@ -1,34 +1,14 @@
-# Ignorer les fichiers et dossiers inutiles
-backup-go-tool/
-.gitignore
-README.md
-backup.go
-backup_config.go
-backup_docker.go
-backup_test.go
-
-# Ignorer les fichiers de build et de cache
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.egg-info/
+dist/
+build/
+.venv/
+node_modules/
+target/
+bin/
+obj/
 *.log
 *.tmp
-*.cache
-
-# Ignorer les fichiers de dépendances non installés
-vendor/
-go.mod
-go.sum
-
-# Ignorer les fichiers de compilation
-*.o
-*.obj
-
-# Ignorer les fichiers de debug
-*.dSYM
-
-# Ignorer les fichiers de configuration système
-.config/
-.ssh/
-keyring/
-
-# Ignorer les fichiers de confidentialité
-*.key
-*.secret
