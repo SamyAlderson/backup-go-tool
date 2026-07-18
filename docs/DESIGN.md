@@ -1,16 +1,24 @@
 # Design Document: backup-go-tool
 
 ## Overview
-Outil de backup en Go pour les systèmes de fichiers Linux
+# Backup-go-tool
+=============
+
+### Description
+Backup-go-tool is a Go project designed for automated backup of files and Docker volumes.
+
+### Install
+#### Prerequisites
+- Docker (for Docker volume ba
 
 ## Architecture
-Le projet est structuré de manière modulaire pour faciliter la maintenance.
+The project follows a modular architecture for maintainability and extensibility.
 
-## Choix techniques
-- Langage: go
-- Approche: Implementation directe avec focus sur la performance
+## Technical Choices
+- Language: go
+- Approach: Direct implementation with focus on correctness and performance
 
-## Améliorations futures
-- Optimisation des performances
-- Ajout de tests supplémentaires
-- Documentation enrichie
+## Future Improvements
+- Performance optimization
+- Additional test coverage
+- Enhanced documentation
