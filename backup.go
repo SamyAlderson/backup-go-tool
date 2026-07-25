@@ -1,4 +1,3 @@
-// Package backup fournit une API pour l'outil de backup.
 package backup
 
 import (
@@ -15,9 +14,11 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
+	"github.com/shopspring/decimal"
+	"time"
 )
 
-// Config représente la configuration de l'outil de backup.
+// Config represents the configuration of the backup tool.
 type Config struct {
 	BackupDir string `json:"backup_dir"`
 	SyncDir   string `json:"sync_dir"`
@@ -26,10 +27,10 @@ type Config struct {
 	} `json:"docker"`
 }
 
-// BackupOption est une fonction qui prend une instance de Backup et renvoie une nouvelle instance de Backup.
+// BackupOption is a function that takes a Backup instance and returns a new Backup instance.
 type BackupOption func(*Backup) *Backup
 
-// NewBackup crée une nouvelle instance de Backup.
+// NewBackup creates a new Backup instance.
 func NewBackup(config Config, fs afero.FileSystem) *Backup {
 	return &Backup{
 		config: config,
@@ -37,14 +38,14 @@ func NewBackup(config Config, fs afero.FileSystem) *Backup {
 	}
 }
 
-// Backup est l'outil de backup principal.
+// Backup is the main backup tool.
 type Backup struct {
 	config Config
 	fs     afero.FileSystem
 	mu     sync.RWMutex
 }
 
-// NewBackupOption est une fonction qui prend une instance de Backup et renvoie une nouvelle instance de Backup avec une nouvelle configuration.
+// NewBackupOption is a function that takes a Backup instance and returns a new Backup instance with a new configuration.
 func NewBackupOption(config Config) BackupOption {
 	return func(b *Backup) *Backup {
 		b.config = config
@@ -52,23 +53,23 @@ func NewBackupOption(config Config) BackupOption {
 	}
 }
 
-// StartStart le processus de backup.
+// Start starts the backup process.
 func (b *Backup) Start() error {
-	// Générer un nouveau certificat RSA pour la session de backup.
+	// Generate a new RSA certificate for the backup session.
 	cert, err := b.generateCert()
 	if err != nil {
-		return errors.Wrap(err, "erreur lors de la génération du certificat")
+		return errors.Wrap(err, "error generating certificate")
 	}
 
-	// Copier les fichiers du répertoire de synchronisation vers le répertoire de backup.
+	// Copy files from the sync directory to the backup directory.
 	if err := b.copyFiles(cert); err != nil {
-		return errors.Wrap(err, "erreur lors de la copie des fichiers")
+		return errors.Wrap(err, "error copying files")
 	}
 
 	return nil
 }
 
-// generateCert génère un nouveau certificat RSA pour la session de backup.
+// generateCert generates a new RSA certificate for the backup session.
 func (b *Backup) generateCert() (*rsa.PrivateKey, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -95,10 +96,10 @@ func (b *Backup) generateCert() (*rsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-// generateSerialNumber génère un nouveau numéro de série pour le certificat.
+// generateSerialNumber generates a new serial number for the certificate.
 func (b *Backup) generateSerialNumber() (*big.Int, error) {
 	serialNumber := big.NewInt(0)
-	_, err := serialNumber.SetBytes(b.generateRandomBytes(16))
+	_, err := serialNumber.SetString("1", 10)
 	if err != nil {
 		return nil, err
 	}
@@ -106,26 +107,27 @@ func (b *Backup) generateSerialNumber() (*big.Int, error) {
 	return serialNumber, nil
 }
 
-// generateRandomBytes génère 16 octets aléatoires.
+// generateRandomBytes generates 16 random bytes.
 func (b *Backup) generateRandomBytes(n int) []byte {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return nil
 	}
 
 	return b
 }
 
-// copyFiles copie les fichiers du répertoire de synchronisation vers le répertoire de backup.
+// copyFiles copies files from the sync directory to the backup directory.
 func (b *Backup) copyFiles(cert *rsa.PrivateKey) error {
-	// Répertoire de synchronisation.
-	syncDir := b.config_SYNC_DIR
+	// Sync directory.
+	syncDir := b.config.SyncDir
 
-	// Répertoire de backup.
-	backupDir := b.config.BACKUP_DIR
+	// Backup directory.
+	backupDir := b.config.BackupDir
 
-	// Vérifier l'existence des répertoires.
+	// Check if directories exist.
 	if err := b.fs.MkdirAll(syncDir, 0755); err != nil {
 		return err
 	}
@@ -134,7 +136,7 @@ func (b *Backup) copyFiles(cert *rsa.PrivateKey) error {
 		return err
 	}
 
-	// Copier les fichiers.
+	// Copy files.
 	files, err := b.fs.ReadDir(syncDir)
 	if err != nil {
 		return err
@@ -144,7 +146,7 @@ func (b *Backup) copyFiles(cert *rsa.PrivateKey) error {
 		srcPath := filepath.Join(syncDir, file.Name())
 		dstPath := filepath.Join(backupDir, file.Name())
 
-		if err := b.fs.Copy(srcPath, dstPath); err != nil {
+		if err := b.fs.CopyFile(dstPath, srcPath); err != nil {
 			return err
 		}
 	}
