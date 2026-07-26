@@ -1,25 +1,15 @@
 # .gitignore
-
 # ignore gofmt cache
 .gofmt.cache
 
-# ignore go build files
-*.go.o
-*.go.s
-*.go.p
-*.go.d
+# ignore go files
+*.go
 
-# ignore other build files
-*.o
-*.s
-*.p
-*.d
+# ignore vendor directory
+vendor/
 
-# ignore IDE files
-.idea/
-.vscode/
+# ignore node_modules directory
+node_modules/
 
-# ignore other files
-*.log
-*.tmp
-*.swp
+# ignore .env file
+.env
