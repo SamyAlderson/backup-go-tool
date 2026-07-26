@@ -1,14 +1,25 @@
-__pycache__/
-*.pyc
-.pytest_cache/
-.env
-*.egg-info/
-dist/
-build/
-.venv/
-node_modules/
-target/
-bin/
-obj/
+# .gitignore
+
+# ignore gofmt cache
+.gofmt.cache
+
+# ignore go build files
+*.go.o
+*.go.s
+*.go.p
+*.go.d
+
+# ignore other build files
+*.o
+*.s
+*.p
+*.d
+
+# ignore IDE files
+.idea/
+.vscode/
+
+# ignore other files
 *.log
 *.tmp
+*.swp
