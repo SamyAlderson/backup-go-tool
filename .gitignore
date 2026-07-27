@@ -1,15 +1,20 @@
 # .gitignore
-# ignore gofmt cache
-.gofmt.cache
 
-# ignore go files
-*.go
-
-# ignore vendor directory
-vendor/
-
-# ignore node_modules directory
+# ignore node_modules folder
 node_modules/
 
 # ignore .env file
 .env
+
+# ignore coverage folder
+coverage/
+
+# ignore build folder
+build/
+
+# ignore go build files
+*.go~
+
+# ignore IDE files
+.idea/
+.vscode/
