@@ -12,90 +12,94 @@ import (
 )
 
 func TestBackup(t *testing.T) {
-	t.Run("backup de fichiers", testBackupFiles)
-	t.Run("backup de conteneurs Docker", testBackupDocker)
+	t.Run("backup files", testBackupFiles)
+	t.Run("backup docker container", testBackupDocker)
 }
 
 func testBackupFiles(t *testing.T) {
-	// Création d'un système de fichiers temporaire
 	tempDir, err := ioutil.TempDir("", "backup-test")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		_ = filepath.Walk(tempDir, func(path string, info fs.FileInfo, err error) error {
-			return afero.RemoveAll(afero.OsFs, path)
-		})
+		if err := afero.RemoveAll(afero.OsFs, tempDir); err != nil {
+			log.Printf("error removing temp dir: %v", err)
+		}
 	}()
 
-	// Création de fichiers temporaire
-	err = afero.WriteFile(afero.OsFs, filepath.Join(tempDir, "fichier1.txt"), []byte("Contenu du fichier 1"), 0644)
-	if err != nil {
-		t.Fatal(err)
+	files := []struct {
+		name string
+		data []byte
+	}{
+		{"fichier1.txt", []byte("Contenu du fichier 1")},
+		{"fichier2.txt", []byte("Contenu du fichier 2")},
 	}
-	err = afero.WriteFile(afero.OsFs, filepath.Join(tempDir, "fichier2.txt"), []byte("Contenu du fichier 2"), 0644)
-	if err != nil {
+
+	for _, file := range files {
+		if err := afero.WriteFile(afero.OsFs, filepath.Join(tempDir, file.name), file.data, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := backupFiles(tempDir); err != nil {
 		t.Fatal(err)
 	}
 
-	// Appel de la fonction de backup
-	err = backupFiles(tempDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Vérification de la présence des fichiers de backup
-	_, err = afero.ReadFile(afero.OsFs, filepath.Join(tempDir, "backup", "fichier1.txt"))
-	if err != nil {
-		t.Errorf("Le fichier de backup 'fichier1.txt' n'existe pas")
-	}
-	_, err = afero.ReadFile(afero.OsFs, filepath.Join(tempDir, "backup", "fichier2.txt"))
-	if err != nil {
-		t.Errorf("Le fichier de backup 'fichier2.txt' n'existe pas")
+	for _, file := range files {
+		_, err := afero.ReadFile(afero.OsFs, filepath.Join(tempDir, "backup", file.name))
+		if err != nil {
+			t.Errorf("backup file '%s' not found", file.name)
+		}
 	}
 }
 
 func testBackupDocker(t *testing.T) {
-	// Création d'un conteneur Docker temporaire
 	container, err := runContainer()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		_ = container.Stop()
-		_ = container.Remove()
+		if err := container.Stop(); err != nil {
+			log.Printf("error stopping container: %v", err)
+		}
+		if err := container.Remove(); err != nil {
+			log.Printf("error removing container: %v", err)
+		}
 	}()
 
-	// Appel de la fonction de backup des conteneurs
-	err = backupDocker(container.ID)
-	if err != nil {
+	if err := backupDocker(container.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	// Vérification de la présence des fichiers de backup
-	_, err = afero.ReadFile(afero.OsFs, filepath.Join("/var/lib/docker/backup", container.ID, "fichier1.txt"))
-	if err != nil {
-		t.Errorf("Le fichier de backup 'fichier1.txt' n'existe pas")
+	files := []struct {
+		name string
+		path string
+	}{
+		{"fichier1.txt", filepath.Join("/var/lib/docker/backup", container.ID, "fichier1.txt")},
+		{"fichier2.txt", filepath.Join("/var/lib/docker/backup", container.ID, "fichier2.txt")},
 	}
-	_, err = afero.ReadFile(afero.OsFs, filepath.Join("/var/lib/docker/backup", container.ID, "fichier2.txt"))
-	if err != nil {
-		t.Errorf("Le fichier de backup 'fichier2.txt' n'existe pas")
+
+	for _, file := range files {
+		_, err := afero.ReadFile(afero.OsFs, file.path)
+		if err != nil {
+			t.Errorf("backup file '%s' not found at '%s'", file.name, file.path)
+		}
 	}
 }
 
 func backupFiles(rootDir string) error {
-	// Logique de backup des fichiers
+	// implement backup logic here
 	return nil
 }
 
 func backupDocker(containerID string) error {
-	// Logique de backup des conteneurs Docker
+	// implement backup logic here
 	return nil
 }
 
-func runContainer() (container *Container, err error) {
-	// Logique de création d'un conteneur Docker
-	return nil, nil
+func runContainer() (*Container, error) {
+	// implement container creation logic here
+	return &Container{ID: "container-id"}, nil
 }
 
 type Container struct {
